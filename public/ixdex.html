@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <title>Qalampir Game</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101010;
+      color: white;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .balance {
+      background: #222;
+      padding: 10px 15px;
+      border-radius: 15px;
+      font-weight: bold;
+    }
+
+    .card {
+      background: #191919;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+
+    .welcome {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .small {
+      color: #999;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .stat {
+      background: #242424;
+      border-radius: 15px;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-title {
+      color: #999;
+      font-size: 13px;
+    }
+
+    .level {
+      margin-top: 15px;
+    }
+
+    .level-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+
+    .progress {
+      width: 100%;
+      height: 10px;
+      background: #303030;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #ff4d00;
+      transition: width 0.3s;
+    }
+
+    .pepper-area {
+      text-align: center;
+      padding: 30px 10px;
+    }
+
+    .pepper {
+      font-size: 100px;
+      margin: 15px 0;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 15px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: #ff4d00;
+      color: white;
+    }
+
+    .secondary {
+      background: #2b2b2b;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .result {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      min-height: 35px;
+      margin-top: 15px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #242424;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .player-name {
+      font-weight: bold;
+    }
+
+    .player-stats {
+      color: #aaa;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #aaa;
+      padding: 20px;
+    }
+
+    .error {
+      background: #3a1515;
+      color: #ff8d8d;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: none;
+    }
+
+    .energy {
+      margin-top: 10px;
+      color: #ffd166;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+
+    <div class="logo">
+      🌶️ Qalampir
+    </div>
+
+    <div class="balance">
+      🌶️ <span id="balance">0</span>
+    </div>
+
+  </div>
+
+
+  <div id="error" class="error"></div>
+
+
+  <!-- PROFILE -->
+
+  <div class="card">
+
+    <div class="welcome">
+      Salom, <span id="username">Player</span> 👋
+    </div>
+
+    <div class="small">
+      Qalampir jangiga tayyormisan?
+    </div>
+
+
+    <div class="stats">
+
+      <div class="stat">
+
+        <div
+          class="stat-value"
+          id="wins"
+        >
+          0
+        </div>
+
+        <div class="stat-title">
+          🏆 G‘alaba
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div
+          class="stat-value"
+          id="losses"
+        >
+          0
+        </div>
+
+        <div class="stat-title">
+          ❌ Mag‘lubiyat
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div
+          class="stat-value"
+          id="streak"
+        >
+          0
+        </div>
+
+        <div class="stat-title">
+          🔥 Streak
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div
+          class="stat-value"
+          id="level"
+        >
+          1
+        </div>
+
+        <div class="stat-title">
+          ⭐ Level
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="level">
+
+      <div class="level-top">
+
+        <span>
+          XP
+        </span>
+
+        <span id="xp">
+          0
+        </span>
+
+      </div>
+
+      <div class="progress">
+
+        <div
+          id="xpBar"
+          class="progress-bar"
+        ></div>
+
+      </div>
+
+    </div>
+
+
+    <div class="energy">
+      ⚡ Energy:
+      <span id="energy">
+        0
+      </span>
+    </div>
+
+  </div>
+
+
+  <!-- GAME -->
+
+  <div class="card">
+
+    <div class="pepper-area">
+
+      <div class="small">
+        🌶️ QALAMPIR JANGI
+      </div>
+
+      <div class="pepper">
+        🌶️
+      </div>
+
+      <div>
+        Raqibni tanla
+      </div>
+
+    </div>
+
+
+    <div class="buttons">
+
+      <button
+        id="winButton"
+        class="primary"
+        onclick="playGame('win')"
+      >
+        🏆 G‘ALABA
+      </button>
+
+
+      <button
+        id="lossButton"
+        class="secondary"
+        onclick="playGame('loss')"
+      >
+        ❌ MAG‘LUBIYAT
+      </button>
+
+    </div>
+
+
+    <div
+      id="result"
+      class="result"
+    ></div>
+
+  </div>
+
+
+  <!-- LEADERBOARD -->
+
+  <div class="card">
+
+    <h2>
+      🏆 Leaderboard
+    </h2>
+
+    <div
+      id="leaderboard"
+      class="loading"
+    >
+      Yuklanmoqda...
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  /* =====================================================
+     TELEGRAM
+  ===================================================== */
+
+  const tg = window.Telegram?.WebApp;
+
+  if (tg) {
+
+    tg.ready();
+
+    tg.expand();
+
+  }
+
+
+  /* =====================================================
+     GLOBAL DATA
+  ===================================================== */
+
+  let currentUser = null;
+
+  let isPlaying = false;
+
+
+  /* =====================================================
+     ELEMENTS
+  ===================================================== */
+
+  const balanceElement =
+    document.getElementById("balance");
+
+  const usernameElement =
+    document.getElementById("username");
+
+  const winsElement =
+    document.getElementById("wins");
+
+  const lossesElement =
+    document.getElementById("losses");
+
+  const streakElement =
+    document.getElementById("streak");
+
+  const levelElement =
+    document.getElementById("level");
+
+  const xpElement =
+    document.getElementById("xp");
+
+  const xpBarElement =
+    document.getElementById("xpBar");
+
+  const energyElement =
+    document.getElementById("energy");
+
+  const resultElement =
+    document.getElementById("result");
+
+  const errorElement =
+    document.getElementById("error");
+
+  const winButton =
+    document.getElementById("winButton");
+
+  const lossButton =
+    document.getElementById("lossButton");
+
+
+  /* =====================================================
+     ERROR
+  ===================================================== */
+
+  function showError(message) {
+
+    errorElement.innerText =
+      message;
+
+    errorElement.style.display =
+      "block";
+
+  }
+
+
+  function hideError() {
+
+    errorElement.style.display =
+      "none";
+
+  }
+
+
+  /* =====================================================
+     TELEGRAM INIT DATA
+  ===================================================== */
+
+  function getTelegramInitData() {
+
+    if (!tg) {
+
+      return "";
+
+    }
+
+    return tg.initData || "";
+
+  }
+
+
+  /* =====================================================
+     API REQUEST
+  ===================================================== */
+
+  async function apiRequest(
+    url,
+    options = {}
+  ) {
+
+    const initData =
+      getTelegramInitData();
+
+
+    const headers = {
+
+      "Content-Type":
+        "application/json",
+
+      "X-Telegram-Init-Data":
+        initData,
+
+      ...(options.headers || {})
+
+    };
+
+
+    const response =
+      await fetch(
+        url,
+        {
+          ...options,
+          headers
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Server xatosi"
+      );
+
+    }
+
+
+    return data;
+
+  }
+
+
+  /* =====================================================
+     UPDATE UI
+  ===================================================== */
+
+  function updateUserUI(user) {
+
+    if (!user) {
+      return;
+    }
+
+
+    currentUser =
+      user;
+
+
+    balanceElement.innerText =
+      Number(user.balance)
+        .toLocaleString();
+
+
+    usernameElement.innerText =
+      user.first_name ||
+      user.username ||
+      "Player";
+
+
+    winsElement.innerText =
+      user.wins;
+
+
+    lossesElement.innerText =
+      user.losses;
+
+
+    streakElement.innerText =
+      user.streak;
+
+
+    levelElement.innerText =
+      user.level;
+
+
+    xpElement.innerText =
+      user.xp;
+
+
+    energyElement.innerText =
+      user.energy;
+
+
+    const xpInsideLevel =
+      Number(user.xp) % 100;
+
+
+    xpBarElement.style.width =
+      xpInsideLevel + "%";
+
+
+    if (user.streak >= 3) {
+
+      resultElement.innerText =
+        `🔥 ${user.streak} WIN STREAK!`;
+
+    }
+
+  }
+
+
+  /* =====================================================
+     LOAD USER
+  ===================================================== */
+
+  async function loadUser() {
+
+    try {
+
+      hideError();
+
+
+      const data =
+        await apiRequest(
+          "/api/me"
+        );
+
+
+      if (!data.success) {
+
+        throw new Error(
+          "User topilmadi"
+        );
+
+      }
+
+
+      updateUserUI(
+        data.user
+      );
+
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      showError(
+        "Telegram orqali kirish amalga oshmadi. Mini App'ni Telegram ichidan oching."
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     PLAY GAME
+  ===================================================== */
+
+  async function playGame(result) {
+
+    if (isPlaying) {
+      return;
+    }
+
+
+    if (!currentUser) {
+
+      showError(
+        "Avval user ma'lumotlari yuklanishi kerak."
+      );
+
+      return;
+
+    }
+
+
+    if (Number(currentUser.energy) <= 0) {
+
+      showError(
+        "⚡ Energy tugadi."
+      );
+
+      return;
+
+    }
+
+
+    isPlaying =
+      true;
+
+
+    winButton.disabled =
+      true;
+
+    lossButton.disabled =
+      true;
+
+
+    resultElement.innerText =
+      "⚔️ Jang...";
+
+
+    try {
+
+      const data =
+        await apiRequest(
+          "/api/game/result",
+          {
+            method: "POST",
+
+            body: JSON.stringify({
+              result
+            })
+
+          }
+        );
+
+
+      updateUserUI(
+        data.user
+      );
+
+
+      if (result === "win") {
+
+        resultElement.innerText =
+          "🏆 G‘ALABA! +100 🌶️";
+
+        if (tg?.HapticFeedback) {
+
+          tg.HapticFeedback.notificationOccurred(
+            "success"
+          );
+
+        }
+
+      } else {
+
+        resultElement.innerText =
+          "❌ MAG‘LUBIYAT -10 🌶️";
+
+        if (tg?.HapticFeedback) {
+
+          tg.HapticFeedback.notificationOccurred(
+            "error"
+          );
+
+        }
+
+      }
+
+
+      loadLeaderboard();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      showError(
+        error.message
+      );
+
+
+      resultElement.innerText =
+        "";
+
+    }
+
+
+    setTimeout(() => {
+
+      isPlaying =
+        false;
+
+      winButton.disabled =
+        false;
+
+      lossButton.disabled =
+        false;
+
+    }, 700);
+
+  }
+
+
+  /* =====================================================
+     LEADERBOARD
+  ===================================================== */
+
+  async function loadLeaderboard() {
+
+    const leaderboard =
+      document.getElementById(
+        "leaderboard"
+      );
+
+
+    try {
+
+      const data =
+        await apiRequest(
+          "/api/leaderboard"
+        );
+
+
+      if (
+        !data.success ||
+        !data.users.length
+      ) {
+
+        leaderboard.innerHTML =
+          "Hozircha o‘yinchilar yo‘q.";
+
+        return;
+
+      }
+
+
+      leaderboard.innerHTML =
+        "";
+
+
+      data.users.forEach(
+        (user, index) => {
+
+          const item =
+            document.createElement(
+              "div"
+            );
+
+
+          item.className =
+            "leaderboard-item";
+
+
+          const name =
+            user.first_name ||
+            user.username ||
+            "Player";
+
+
+          item.innerHTML = `
+
+            <div>
+
+              <div class="player-name">
+
+                ${index + 1}.
+                ${escapeHtml(name)}
+
+              </div>
+
+              <div class="player-stats">
+
+                🏆 ${user.wins}
+                • 🔥 ${user.streak}
+                • ⭐ ${user.level}
+
+              </div>
+
+            </div>
+
+            <div>
+
+              🌶️
+              ${Number(user.balance)
+                .toLocaleString()}
+
+            </div>
+
+          `;
+
+
+          leaderboard.appendChild(
+            item
+          );
+
+        }
+      );
+
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      leaderboard.innerText =
+        "Leaderboardni yuklab bo‘lmadi.";
+
+    }
+
+  }
+
+
+  /* =====================================================
+     HTML ESCAPE
+  ===================================================== */
+
+  function escapeHtml(text) {
+
+    const div =
+      document.createElement(
+        "div"
+      );
+
+    div.textContent =
+      text;
+
+    return div.innerHTML;
+
+  }
+
+
+  /* =====================================================
+     SOCKET.IO
+  ===================================================== */
+
+  let socket = null;
+
+
+  if (typeof io !== "undefined") {
+
+    socket =
+      io();
+
+
+    socket.on(
+      "connect",
+      () => {
+
+        console.log(
+          "Socket connected"
+        );
+
+      }
+    );
+
+
+    socket.on(
+      "game-action",
+      (data) => {
+
+        console.log(
+          "Game action:",
+          data
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =====================================================
+     START
+  ===================================================== */
+
+  async function start() {
+
+    await loadUser();
+
+    await loadLeaderboard();
+
+  }
+
+
+  start();
+
+</script>
+
+</body>
+</html>
