@@ -8,6 +8,12 @@ const pool = new Pool({
 });
 
 async function initDatabase() {
+  // BIR MARTALIK TOZALASH: eski, noto'g'ri strukturadagi jadvallarni o'chiramiz.
+  // Bu ma'lumotlarni butunlay o'chiradi! Muvaffaqiyatli ishga tushgach,
+  // shu ikki qatorni (DROP TABLE...) faylidan olib tashlang.
+  await pool.query(`DROP TABLE IF EXISTS transactions CASCADE;`);
+  await pool.query(`DROP TABLE IF EXISTS users CASCADE;`);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id BIGINT PRIMARY KEY,
