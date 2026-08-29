@@ -32,14 +32,18 @@ app.use(express.static(path.join(__dirname, "public")));
 
 function validateTelegramInitData(initData) {
   if (!initData) {
+    console.error("[AUTH DEBUG] initData bo'sh yoki yuborilmagan.");
     return null;
   }
+
+  console.error("[AUTH DEBUG] initData uzunligi:", initData.length);
 
   const params = new URLSearchParams(initData);
 
   const hash = params.get("hash");
 
   if (!hash) {
+    console.error("[AUTH DEBUG] hash topilmadi initData ichida.");
     return null;
   }
 
@@ -53,9 +57,11 @@ function validateTelegramInitData(initData) {
   const botToken = process.env.BOT_TOKEN;
 
   if (!botToken) {
-    console.error("BOT_TOKEN topilmadi.");
+    console.error("[AUTH DEBUG] BOT_TOKEN topilmadi (env variable yo'q).");
     return null;
   }
+
+  console.error("[AUTH DEBUG] BOT_TOKEN uzunligi:", botToken.length, "boshi:", botToken.slice(0, 6));
 
   const secretKey = crypto
     .createHmac("sha256", "WebAppData")
@@ -68,12 +74,18 @@ function validateTelegramInitData(initData) {
     .digest("hex");
 
   if (calculatedHash !== hash) {
+    console.error("[AUTH DEBUG] HASH MOS KELMADI.");
+    console.error("[AUTH DEBUG] kutilgan (telegram):", hash);
+    console.error("[AUTH DEBUG] hisoblangan (server):", calculatedHash);
     return null;
   }
+
+  console.error("[AUTH DEBUG] Hash mos keldi, davom etyapti...");
 
   const authDate = Number(params.get("auth_date"));
 
   if (!authDate) {
+    console.error("[AUTH DEBUG] auth_date topilmadi.");
     return null;
   }
 
@@ -83,18 +95,21 @@ function validateTelegramInitData(initData) {
   const currentTime = Math.floor(Date.now() / 1000);
 
   if (currentTime - authDate > maxAge) {
+    console.error("[AUTH DEBUG] auth_date eskirgan. Farq (sekund):", currentTime - authDate);
     return null;
   }
 
   const userString = params.get("user");
 
   if (!userString) {
+    console.error("[AUTH DEBUG] user maydoni topilmadi.");
     return null;
   }
 
   try {
     return JSON.parse(userString);
   } catch (error) {
+    console.error("[AUTH DEBUG] user JSON parse xatosi:", error.message);
     return null;
   }
 }
