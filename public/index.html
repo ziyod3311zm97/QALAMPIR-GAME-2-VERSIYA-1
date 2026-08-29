@@ -825,34 +825,123 @@
             .cell { font-size: 24px; }
         }
 
-        /* Planshet va desktop */
+        /* ============================================
+           IXCHAM DESKTOP / O'YIN EKRANI
+        ============================================ */
+
         @media (min-width: 601px) {
-            .app { max-width: 440px; padding: 16px 18px 24px; }
-            .grid-container { gap: 10px; }
-            .cell { font-size: 28px; }
-            .hero-title { font-size: 38px; }
+            .app {
+                width: 100%;
+                max-width: 390px;
+                padding: 12px 14px 20px;
+            }
+
+            .topbar { padding: 8px 11px; margin-bottom: 10px; }
+            .avatar { width: 36px; height: 36px; font-size: 17px; }
+            .profile { gap: 8px; }
+            .profile-name { font-size: 12px; }
+            .profile-level { font-size: 8px; }
+            .balance { padding: 5px 10px; font-size: 11px; }
+
+            .hero { padding: 16px 16px 14px; margin-bottom: 10px; }
+            .hero-title { font-size: 32px; }
+            .hero-subtitle { font-size: 12px; }
+            .streak { margin-top: 8px; padding-top: 8px; }
+
+            .main-play {
+                padding: 11px;
+                margin-bottom: 10px;
+                font-size: 15px;
+            }
+
+            .menu-grid { gap: 7px; margin-bottom: 10px; }
+            .menu-card { padding: 10px 9px; }
+            .menu-icon { font-size: 16px; }
+            .menu-title { font-size: 11px; }
+            .menu-desc { font-size: 8px; }
+
+            .daily, .referral {
+                padding: 11px 12px;
+                margin-bottom: 10px;
+            }
+
+            .section-title, .referral-title { font-size: 12px; }
+            .referral-text { font-size: 10px; margin: 3px 0 9px; }
+            .share-btn { padding: 10px; font-size: 11px; }
+
+            /* GAME SCREEN */
+            .back-btn { font-size: 11px; margin-bottom: 7px; }
+            .game-header { margin-bottom: 9px; }
+            .game-title { font-size: 26px; }
+
+            .status {
+                margin-top: 4px;
+                padding: 5px 12px;
+                min-height: 30px;
+                font-size: 10px;
+            }
+
+            .battle-card {
+                width: 100%;
+                padding: 10px;
+                border-radius: 16px;
+            }
+
+            .label {
+                gap: 7px;
+                font-size: 8px;
+                margin-bottom: 7px;
+            }
+
+            /* KATAKLAR */
+            .grid-container {
+                width: 280px;
+                max-width: 100%;
+                margin: 0 auto;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+
+            .cell {
+                width: 100%;
+                aspect-ratio: 1;
+                min-height: 0;
+                border-radius: 9px;
+                border-width: 1.5px;
+                font-size: 22px;
+            }
+
+            .divider { margin: 10px 0; }
+
+            .ready-btn {
+                padding: 10px;
+                margin-top: 10px;
+                font-size: 13px;
+            }
+
+            .footer { padding-top: 8px; }
         }
 
         @media (min-width: 900px) {
             .app {
-                max-width: 400px;
-                padding: 14px 16px 24px;
+                max-width: 380px;
+                padding: 10px 12px 18px;
             }
 
-            .hero { padding: 20px 18px 18px; }
-            .hero-title { font-size: 36px; }
-            .cell { font-size: 26px; }
+            .grid-container { width: 270px; gap: 6px; }
+            .cell { font-size: 21px; }
+            .game-title { font-size: 25px; }
         }
 
         @media (min-width: 1200px) {
             .app {
-                max-width: 420px;
-                padding: 16px 18px 24px;
+                max-width: 370px;
+                padding: 10px 12px 18px;
             }
 
-            .hero-title { font-size: 38px; }
-            .cell { font-size: 28px; }
-            .grid-container { gap: 8px; }
+            .grid-container { width: 260px; gap: 5px; }
+            .cell { font-size: 20px; }
+            .battle-card { padding: 9px; }
         }
 
         /* Reduced Motion */
