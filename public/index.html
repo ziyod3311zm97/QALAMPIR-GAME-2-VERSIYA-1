@@ -1,861 +1,46 @@
+```html
 <!DOCTYPE html>
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
-<link rel="stylesheet" href="style.css">
+
+    <!-- TASHQI CSS -->
+    <link rel="stylesheet" href="style.css">
+
     <title>Qalampir</title>
 
+    <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link
         href="https://fonts.googleapis.com/css2?family=Anton&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
         rel="stylesheet"
     >
 
+    <!-- TELEGRAM -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- SOCKET.IO -->
     <script src="/socket.io/socket.io.js"></script>
-
-    <style>
-
-        /* =====================================================
-           TOKENS
-        ===================================================== */
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        :root {
-            /* charred-market palette, not the usual blue-black */
-            --bg: #140d0a;
-            --bg-raise: #1f1610;
-            --bg-raise-2: #2a1c14;
-            --line: rgba(255, 193, 128, .14);
-            --line-soft: rgba(255, 193, 128, .07);
-
-            --ember: #ff4a1f;
-            --ember-deep: #c22a0e;
-            --habanero: #ff9a2e;
-            --gold: #ffc93d;
-            --lime: #9bd94a;
-            --danger: #ff4d5e;
-
-            --ash: #a8927f;
-            --ash-dim: #705f52;
-            --cream: #fff4e8;
-
-            --char: #0a0503;
-
-            --radius-lg: 22px;
-            --radius-md: 16px;
-            --radius-sm: 11px;
-
-            --font-display: "Anton", "Impact", sans-serif;
-            --font-body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            --font-mono: "Space Mono", monospace;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: .001ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: .001ms !important;
-            }
-        }
-
-        html {
-            background: var(--bg);
-        }
-
-        body {
-            position: relative;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            background:
-                radial-gradient(circle at 18% -6%, rgba(255, 154, 46, .16), transparent 42%),
-                radial-gradient(circle at 88% 8%, rgba(255, 74, 31, .12), transparent 38%),
-                var(--bg);
-            color: var(--cream);
-            font-family: var(--font-body);
-            overflow-x: hidden;
-        }
-
-        /* subtle charcoal grain, self-contained (no external image) */
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            opacity: .05;
-            mix-blend-mode: overlay;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
-
-        button,
-        input {
-            font: inherit;
-            color: inherit;
-        }
-
-        button {
-            border: 0;
-            cursor: pointer;
-            -webkit-appearance: none;
-        }
-
-        button:focus-visible,
-        input:focus-visible {
-            outline: 2px solid var(--gold);
-            outline-offset: 2px;
-        }
-
-        .app {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 520px;
-            margin: auto;
-            padding: 16px 14px 34px;
-        }
-
-        /* =====================================================
-           TOPBAR
-        ===================================================== */
-
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .profile {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-        }
-
-        .avatar {
-            position: relative;
-            width: 46px;
-            height: 46px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle at 32% 28%, #ff8a3d, var(--ember-deep) 78%);
-            box-shadow:
-                0 0 0 2px var(--char),
-                0 0 0 4px rgba(255, 154, 46, .35),
-                0 6px 14px rgba(255, 74, 31, .25);
-            font-size: 21px;
-        }
-
-        .avatar::after {
-            content: "";
-            position: absolute;
-            inset: -6px;
-            border-radius: 50%;
-            border: 1px dashed rgba(255, 201, 61, .4);
-        }
-
-        .profile-name {
-            font-weight: 800;
-            font-size: 15px;
-            letter-spacing: -.2px;
-        }
-
-        .profile-level {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 3px;
-            color: var(--ash);
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: .3px;
-        }
-
-        .balance {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            padding: 9px 13px;
-            border-radius: 999px;
-            background: linear-gradient(180deg, var(--bg-raise-2), var(--bg-raise));
-            border: 1px solid var(--line);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
-        }
-
-        .balance span {
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--gold);
-            letter-spacing: .5px;
-        }
-
-        /* =====================================================
-           HERO
-        ===================================================== */
-
-        .hero {
-            position: relative;
-            overflow: hidden;
-            padding: 26px 22px 24px;
-            border-radius: var(--radius-lg);
-            background:
-                linear-gradient(155deg, rgba(255, 74, 31, .22), rgba(31, 22, 16, .98) 60%),
-                var(--bg-raise);
-            border: 1px solid rgba(255, 154, 46, .22);
-            margin-bottom: 12px;
-        }
-
-        .hero::before {
-            content: "";
-            position: absolute;
-            inset: -40% -20% auto auto;
-            width: 220px;
-            height: 220px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 154, 46, .35), transparent 70%);
-            filter: blur(6px);
-        }
-
-        @media (prefers-reduced-motion: no-preference) {
-            .hero::before {
-                animation: emberDrift 7s ease-in-out infinite alternate;
-            }
-        }
-
-        @keyframes emberDrift {
-            from { opacity: .55; transform: translate(0, 0) scale(1); }
-            to   { opacity: 1;   transform: translate(-14px, 10px) scale(1.08); }
-        }
-
-        .hero-eyebrow {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 1.6px;
-            text-transform: uppercase;
-            color: var(--habanero);
-            margin-bottom: 8px;
-        }
-
-        .hero-title {
-            position: relative;
-            font-family: var(--font-display);
-            font-weight: 400;
-            font-size: 38px;
-            line-height: .95;
-            letter-spacing: .5px;
-            background: linear-gradient(120deg, var(--gold), var(--ember) 70%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 24px rgba(255, 74, 31, .18);
-        }
-
-        .hero-subtitle {
-            position: relative;
-            margin-top: 6px;
-            color: var(--ash);
-            font-size: 13px;
-        }
-
-        /* spice meter: streak shown as filling pepper pods, not a plain pill */
-        .streak {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 17px;
-        }
-
-        .streak-label {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: .5px;
-            color: var(--ash);
-            text-transform: uppercase;
-        }
-
-        .streak-pods {
-            display: inline-flex;
-            gap: 3px;
-            font-size: 15px;
-            filter: grayscale(1) opacity(.35);
-        }
-
-        .streak-pods.is-lit {
-            filter: none;
-        }
-
-        .streak b {
-            font-family: var(--font-mono);
-            color: var(--gold);
-            font-size: 12px;
-        }
-
-        /* =====================================================
-           MAIN PLAY BUTTON
-        ===================================================== */
-
-        .main-play {
-            position: relative;
-            width: 100%;
-            padding: 18px;
-            border-radius: var(--radius-md);
-            background: linear-gradient(180deg, var(--habanero), var(--ember) 60%, var(--ember-deep));
-            color: var(--char);
-            font-family: var(--font-display);
-            font-weight: 400;
-            font-size: 17px;
-            letter-spacing: .8px;
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, .35),
-                0 10px 0 var(--ember-deep),
-                0 16px 30px rgba(255, 74, 31, .3);
-            margin-bottom: 12px;
-            transition: transform .12s, box-shadow .12s;
-        }
-
-        .main-play:active {
-            transform: translateY(6px);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, .35),
-                0 4px 0 var(--ember-deep),
-                0 8px 16px rgba(255, 74, 31, .24);
-        }
-
-        /* =====================================================
-           MENU GRID (torn-ticket tiles)
-        ===================================================== */
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-
-        .menu-card {
-            position: relative;
-            min-height: 92px;
-            padding: 14px;
-            text-align: left;
-            background: var(--bg-raise);
-            border: 1px solid var(--line);
-            border-radius: var(--radius-md);
-            clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
-            transition: transform .12s, border-color .12s;
-        }
-
-        .menu-card:active {
-            transform: scale(.97);
-            border-color: rgba(255, 154, 46, .4);
-        }
-
-        .menu-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
-            background: rgba(255, 154, 46, .12);
-            font-size: 17px;
-        }
-
-        .menu-title {
-            margin-top: 9px;
-            font-weight: 800;
-            font-size: 13px;
-        }
-
-        .menu-desc {
-            margin-top: 2px;
-            color: var(--ash-dim);
-            font-size: 10px;
-        }
-
-        /* =====================================================
-           DAILY TASK
-        ===================================================== */
-
-        .daily {
-            padding: 16px;
-            border-radius: var(--radius-md);
-            background: var(--bg-raise);
-            border: 1px solid var(--line);
-            margin-bottom: 12px;
-        }
-
-        .section-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 13px;
-        }
-
-        .section-title {
-            font-size: 13px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: .4px;
-        }
-
-        .section-link {
-            font-family: var(--font-mono);
-            color: var(--gold);
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .daily-task {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .daily-icon {
-            flex-shrink: 0;
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 201, 61, .1);
-            font-size: 21px;
-        }
-
-        .task-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .task-title {
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .progress {
-            position: relative;
-            height: 7px;
-            border-radius: 10px;
-            background: var(--char);
-            border: 1px solid var(--line-soft);
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .progress span {
-            display: block;
-            width: 34%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--ember), var(--gold));
-            border-radius: inherit;
-        }
-
-        .reward {
-            flex-shrink: 0;
-            color: var(--gold);
-            font-family: var(--font-mono);
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        /* =====================================================
-           REFERRAL
-        ===================================================== */
-
-        .referral {
-            position: relative;
-            overflow: hidden;
-            padding: 17px;
-            border-radius: var(--radius-md);
-            background: linear-gradient(135deg, rgba(255, 74, 31, .18), var(--bg-raise) 65%);
-            border: 1px solid rgba(255, 154, 46, .2);
-            margin-bottom: 12px;
-        }
-
-        .referral-title {
-            font-weight: 800;
-            font-size: 15px;
-        }
-
-        .referral-text {
-            color: var(--ash);
-            font-size: 11.5px;
-            line-height: 1.55;
-            margin: 6px 0 13px;
-        }
-
-        .share-btn {
-            width: 100%;
-            padding: 13px;
-            border-radius: var(--radius-sm);
-            background: var(--cream);
-            color: var(--char);
-            font-size: 12.5px;
-            font-weight: 800;
-            letter-spacing: .2px;
-        }
-
-        .footer {
-            text-align: center;
-            color: var(--ash-dim);
-            font-family: var(--font-mono);
-            font-size: 9px;
-            letter-spacing: .4px;
-            margin-top: 20px;
-        }
-
-        /* =====================================================
-           GAME SCREEN
-        ===================================================== */
-
-        .game-screen {
-            display: none;
-        }
-
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: transparent;
-            color: var(--ash);
-            padding: 6px 0;
-            margin-bottom: 12px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .game-header {
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .game-title {
-            font-family: var(--font-display);
-            font-weight: 400;
-            font-size: 24px;
-            letter-spacing: .4px;
-            color: var(--cream);
-        }
-
-        .status {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 14px;
-            min-height: 20px;
-            white-space: pre-line;
-            background: var(--bg-raise);
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            color: var(--gold);
-            font-family: var(--font-mono);
-            font-size: 11.5px;
-            font-weight: 700;
-            letter-spacing: .2px;
-        }
-
-        .battle-card {
-            position: relative;
-            padding: 18px 16px;
-            border-radius: var(--radius-lg);
-            background: var(--bg-raise);
-            border: 1px solid var(--line);
-            margin-bottom: 12px;
-        }
-
-        .label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--ash);
-            font-family: var(--font-mono);
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.4px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .label::before,
-        .label::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: var(--line);
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 9px;
-            max-width: 280px;
-            margin: auto;
-        }
-
-        .cell {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1;
-            min-height: 74px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 27px;
-            user-select: none;
-            transition: transform .12s, box-shadow .12s, border-color .12s;
-            box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .28);
-        }
-
-        .cell:active {
-            transform: scale(.94);
-        }
-
-        /* enemy side: ash / charcoal, unknown & cold */
-        .enemy-cell {
-            background:
-                radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .03), transparent 60%),
-                linear-gradient(160deg, #241713, #150c09);
-            border: 1.5px solid rgba(255, 77, 94, .28);
-        }
-
-        /* my side: warm terracotta soil, planted */
-        .my-cell {
-            background:
-                radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .04), transparent 60%),
-                linear-gradient(160deg, #2c1c12, #1a1109);
-            border: 1.5px solid rgba(255, 154, 46, .3);
-        }
-
-        .cell.selected {
-            border-color: var(--gold);
-            background: radial-gradient(circle at 50% 40%, rgba(255, 201, 61, .18), #1a1109 75%);
-            box-shadow:
-                inset 0 -3px 0 rgba(0, 0, 0, .28),
-                0 0 0 3px rgba(255, 201, 61, .16),
-                0 0 20px rgba(255, 201, 61, .35);
-        }
-
-        @media (prefers-reduced-motion: no-preference) {
-            .cell.selected {
-                animation: emberPulse 1.6s ease-in-out infinite;
-            }
-        }
-
-        @keyframes emberPulse {
-            0%, 100% { box-shadow: inset 0 -3px 0 rgba(0,0,0,.28), 0 0 0 3px rgba(255,201,61,.14), 0 0 16px rgba(255,201,61,.28); }
-            50%      { box-shadow: inset 0 -3px 0 rgba(0,0,0,.28), 0 0 0 5px rgba(255,201,61,.22), 0 0 26px rgba(255,201,61,.45); }
-        }
-
-        .cell.miss {
-            color: var(--ash-dim);
-            background: var(--char);
-            border-color: rgba(255, 255, 255, .06);
-            box-shadow: none;
-        }
-
-        .divider {
-            height: 1px;
-            margin: 20px 0;
-            background-image: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 12px);
-        }
-
-        .ready-btn {
-            display: none;
-            width: 100%;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: var(--radius-sm);
-            background: linear-gradient(180deg, var(--habanero), var(--ember));
-            color: var(--char);
-            font-family: var(--font-display);
-            font-weight: 400;
-            font-size: 15px;
-            letter-spacing: .5px;
-            box-shadow: 0 8px 0 var(--ember-deep), 0 14px 26px rgba(255, 74, 31, .28);
-            transition: transform .12s, box-shadow .12s;
-        }
-
-        .ready-btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 3px 0 var(--ember-deep), 0 6px 14px rgba(255, 74, 31, .22);
-        }
-
-        /* =====================================================
-           MODALS (torn ticket bottom-sheet)
-        ===================================================== */
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            z-index: 50;
-            display: none;
-            align-items: flex-end;
-            justify-content: center;
-            background: rgba(10, 5, 3, .72);
-            backdrop-filter: blur(6px);
-        }
-
-        .modal-box {
-            position: relative;
-            width: 100%;
-            max-width: 520px;
-            max-height: 82vh;
-            overflow-y: auto;
-            padding: 26px 22px 22px;
-            border-radius: 22px 22px 0 0;
-            background: var(--bg-raise);
-            border-top: 1px solid var(--line);
-        }
-
-        .modal-box::before {
-            content: "";
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            width: 40px;
-            height: 4px;
-            border-radius: 4px;
-            background: var(--line);
-            transform: translateX(-50%);
-        }
-
-        .modal-title {
-            font-family: var(--font-display);
-            font-weight: 400;
-            font-size: 20px;
-            letter-spacing: .3px;
-            margin-bottom: 16px;
-        }
-
-        .room-input {
-            width: 100%;
-            padding: 15px;
-            color: var(--cream);
-            background: var(--char);
-            border: 1px solid var(--line);
-            border-radius: var(--radius-sm);
-            text-align: center;
-            font-family: var(--font-mono);
-            font-size: 19px;
-            letter-spacing: 6px;
-            outline: none;
-        }
-
-        .room-input::placeholder {
-            letter-spacing: normal;
-            color: var(--ash-dim);
-            font-family: var(--font-body);
-        }
-
-        .modal-btn {
-            width: 100%;
-            padding: 15px;
-            margin-top: 10px;
-            border-radius: var(--radius-sm);
-            background: linear-gradient(180deg, var(--habanero), var(--ember));
-            color: var(--char);
-            font-weight: 800;
-            font-size: 13.5px;
-        }
-
-        .modal-cancel {
-            background: var(--bg-raise-2);
-            color: var(--cream);
-            box-shadow: inset 0 0 0 1px var(--line);
-        }
-
-        /* =====================================================
-           LEADERBOARD ROWS
-        ===================================================== */
-
-        .rank-row {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            padding: 12px 4px;
-            border-bottom: 1px dashed var(--line-soft);
-        }
-
-        .rank-row:last-of-type {
-            border-bottom: 0;
-        }
-
-        .rank-number {
-            width: 26px;
-            text-align: center;
-            font-family: var(--font-mono);
-            font-weight: 700;
-            color: var(--ash);
-        }
-
-        .rank-avatar {
-            flex-shrink: 0;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-raise-2);
-            border: 1px solid var(--line);
-        }
-
-        .rank-name {
-            flex: 1;
-            min-width: 0;
-            font-size: 12.5px;
-            font-weight: 700;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .rank-score {
-            flex-shrink: 0;
-            color: var(--gold);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        @media (max-width: 350px) {
-            .cell {
-                min-height: 62px;
-                font-size: 23px;
-            }
-
-            .hero-title {
-                font-size: 32px;
-            }
-        }
-
-    </style>
 </head>
 
 <body>
 
 <div class="app">
 
+    <!-- =====================================================
+         HOME SCREEN
+    ====================================================== -->
+
     <div id="homeScreen">
+
+        <!-- TOPBAR -->
 
         <div class="topbar">
 
@@ -866,24 +51,37 @@
                 </div>
 
                 <div>
-                    <div class="profile-name" id="playerName">
+
+                    <div
+                        class="profile-name"
+                        id="playerName"
+                    >
                         O'yinchi
                     </div>
 
                     <div class="profile-level">
                         LVL 1 · YANGI SAVDOGAR
                     </div>
+
                 </div>
 
             </div>
 
+
             <div class="balance">
+
                 🌶️
-                <span id="coinBalance">100</span>
+
+                <span id="coinBalance">
+                    100
+                </span>
+
             </div>
 
         </div>
 
+
+        <!-- HERO -->
 
         <div class="hero">
 
@@ -899,67 +97,128 @@
                 Meni yuta olasanmi? 😈
             </div>
 
+
             <div class="streak">
-                <span class="streak-label">Win Streak</span>
-                <span class="streak-pods" id="streakPods">🌶️🌶️🌶️🌶️🌶️</span>
-                <b><span id="streak">0</span></b>
+
+                <span class="streak-label">
+                    Win Streak
+                </span>
+
+                <span
+                    class="streak-pods"
+                    id="streakPods"
+                >
+                    🌶️🌶️🌶️🌶️🌶️
+                </span>
+
+                <b>
+                    <span id="streak">
+                        0
+                    </span>
+                </b>
+
             </div>
 
         </div>
 
 
-        <button class="main-play" onclick="startRandom()">
+        <!-- QUICK GAME -->
+
+        <button
+            class="main-play"
+            onclick="startRandom()"
+        >
             ⚡ TEZKOR O'YIN
         </button>
 
 
+        <!-- MENU -->
+
         <div class="menu-grid">
 
-            <button class="menu-card" onclick="openRoomModal()">
-                <div class="menu-icon">👥</div>
+            <button
+                class="menu-card"
+                onclick="openRoomModal()"
+            >
+
+                <div class="menu-icon">
+                    👥
+                </div>
+
                 <div class="menu-title">
                     Do'st bilan
                 </div>
+
                 <div class="menu-desc">
                     Duel yaratish
                 </div>
+
             </button>
 
 
-            <button class="menu-card" onclick="showLeaderboard()">
-                <div class="menu-icon">🏆</div>
+            <button
+                class="menu-card"
+                onclick="showLeaderboard()"
+            >
+
+                <div class="menu-icon">
+                    🏆
+                </div>
+
                 <div class="menu-title">
                     Reyting
                 </div>
+
                 <div class="menu-desc">
                     TOP o'yinchilar
                 </div>
+
             </button>
 
 
-            <button class="menu-card" onclick="dailyBonus()">
-                <div class="menu-icon">🎁</div>
+            <button
+                class="menu-card"
+                onclick="dailyBonus()"
+            >
+
+                <div class="menu-icon">
+                    🎁
+                </div>
+
                 <div class="menu-title">
                     Bonus
                 </div>
+
                 <div class="menu-desc">
                     Bugungi mukofot
                 </div>
+
             </button>
 
 
-            <button class="menu-card" onclick="showSkins()">
-                <div class="menu-icon">🎨</div>
+            <button
+                class="menu-card"
+                onclick="showSkins()"
+            >
+
+                <div class="menu-icon">
+                    🎨
+                </div>
+
                 <div class="menu-title">
                     Skinlar
                 </div>
+
                 <div class="menu-desc">
                     Qalampiringizni bezang
                 </div>
+
             </button>
 
         </div>
 
+
+        <!-- DAILY TASK -->
 
         <div class="daily">
 
@@ -982,6 +241,7 @@
                     🏆
                 </div>
 
+
                 <div class="task-info">
 
                     <div class="task-title">
@@ -989,10 +249,15 @@
                     </div>
 
                     <div class="progress">
-                        <span id="dailyProgress"></span>
+
+                        <span
+                            id="dailyProgress"
+                        ></span>
+
                     </div>
 
                 </div>
+
 
                 <div class="reward">
                     1/3
@@ -1003,6 +268,8 @@
         </div>
 
 
+        <!-- REFERRAL -->
+
         <div class="referral">
 
             <div class="referral-title">
@@ -1010,17 +277,25 @@
             </div>
 
             <div class="referral-text">
+
                 Do'stingiz o'yinga kirsa siz ham,
                 u ham bonus oladi. Birgalikda reytingda
                 yuqoriga chiqing!
+
             </div>
 
-            <button class="share-btn" onclick="shareGame()">
+
+            <button
+                class="share-btn"
+                onclick="shareGame()"
+            >
                 🚀 DO'STIMNI TAKLIF QILISH
             </button>
 
         </div>
 
+
+        <!-- FOOTER -->
 
         <div class="footer">
             QALAMPIR © 2026
@@ -1029,12 +304,26 @@
     </div>
 
 
-    <div id="gameScreen" class="game-screen">
+    <!-- =====================================================
+         GAME SCREEN
+    ====================================================== -->
 
-        <button class="back-btn" onclick="backHome()">
+    <div
+        id="gameScreen"
+        class="game-screen"
+    >
+
+        <!-- BACK -->
+
+        <button
+            class="back-btn"
+            onclick="backHome()"
+        >
             ← Orqaga
         </button>
 
+
+        <!-- GAME HEADER -->
 
         <div class="game-header">
 
@@ -1042,14 +331,21 @@
                 🌶️ QALAMPIR DUEL
             </div>
 
-            <div id="status" class="status">
+            <div
+                id="status"
+                class="status"
+            >
                 Kutilmoqda...
             </div>
 
         </div>
 
 
+        <!-- BATTLE -->
+
         <div class="battle-card">
+
+            <!-- ENEMY -->
 
             <div class="label">
                 Raqib maydoni
@@ -1058,19 +354,43 @@
 
             <div class="grid-container">
 
-                <div class="cell enemy-cell" onclick="attack(0)"></div>
-                <div class="cell enemy-cell" onclick="attack(1)"></div>
-                <div class="cell enemy-cell" onclick="attack(2)"></div>
+                <div
+                    class="cell enemy-cell"
+                    onclick="attack(0)"
+                ></div>
 
-                <div class="cell enemy-cell" onclick="attack(3)"></div>
-                <div class="cell enemy-cell" onclick="attack(4)"></div>
-                <div class="cell enemy-cell" onclick="attack(5)"></div>
+                <div
+                    class="cell enemy-cell"
+                    onclick="attack(1)"
+                ></div>
+
+                <div
+                    class="cell enemy-cell"
+                    onclick="attack(2)"
+                ></div>
+
+                <div
+                    class="cell enemy-cell"
+                    onclick="attack(3)"
+                ></div>
+
+                <div
+                    class="cell enemy-cell"
+                    onclick="attack(4)"
+                ></div>
+
+                <div
+                    class="cell enemy-cell"
+                    onclick="attack(5)"
+                ></div>
 
             </div>
 
 
             <div class="divider"></div>
 
+
+            <!-- MY FIELD -->
 
             <div class="label">
                 Sizning maydoningiz
@@ -1079,16 +399,40 @@
 
             <div class="grid-container">
 
-                <div class="cell my-cell" onclick="selectMySpot(0)"></div>
-                <div class="cell my-cell" onclick="selectMySpot(1)"></div>
-                <div class="cell my-cell" onclick="selectMySpot(2)"></div>
+                <div
+                    class="cell my-cell"
+                    onclick="selectMySpot(0)"
+                ></div>
 
-                <div class="cell my-cell" onclick="selectMySpot(3)"></div>
-                <div class="cell my-cell" onclick="selectMySpot(4)"></div>
-                <div class="cell my-cell" onclick="selectMySpot(5)"></div>
+                <div
+                    class="cell my-cell"
+                    onclick="selectMySpot(1)"
+                ></div>
+
+                <div
+                    class="cell my-cell"
+                    onclick="selectMySpot(2)"
+                ></div>
+
+                <div
+                    class="cell my-cell"
+                    onclick="selectMySpot(3)"
+                ></div>
+
+                <div
+                    class="cell my-cell"
+                    onclick="selectMySpot(4)"
+                ></div>
+
+                <div
+                    class="cell my-cell"
+                    onclick="selectMySpot(5)"
+                ></div>
 
             </div>
 
+
+            <!-- READY -->
 
             <button
                 id="readyBtn"
@@ -1105,7 +449,14 @@
 </div>
 
 
-<div id="roomModal" class="modal">
+<!-- =====================================================
+     ROOM MODAL
+====================================================== -->
+
+<div
+    id="roomModal"
+    class="modal"
+>
 
     <div class="modal-box">
 
@@ -1113,9 +464,14 @@
             👥 Do'st bilan o'ynash
         </div>
 
-        <button class="modal-btn" onclick="createRoom()">
+
+        <button
+            class="modal-btn"
+            onclick="createRoom()"
+        >
             ➕ Yangi xona yaratish
         </button>
+
 
         <input
             id="roomInput"
@@ -1125,9 +481,14 @@
             placeholder="4 xonali kod"
         >
 
-        <button class="modal-btn" onclick="joinRoom()">
+
+        <button
+            class="modal-btn"
+            onclick="joinRoom()"
+        >
             🚪 Xonaga kirish
         </button>
+
 
         <button
             class="modal-btn modal-cancel"
@@ -1141,7 +502,14 @@
 </div>
 
 
-<div id="leaderboardModal" class="modal">
+<!-- =====================================================
+     LEADERBOARD MODAL
+====================================================== -->
+
+<div
+    id="leaderboardModal"
+    class="modal"
+>
 
     <div class="modal-box">
 
@@ -1149,9 +517,11 @@
             🏆 TOP O'YINCHILAR
         </div>
 
+
         <div id="leaderboardList">
             ⏳ Yuklanmoqda...
         </div>
+
 
         <button
             class="modal-btn modal-cancel"
@@ -1165,13 +535,23 @@
 </div>
 
 
+<!-- =====================================================
+     JAVASCRIPT
+====================================================== -->
+
 <script>
-    const tg = window.Telegram.WebApp;
+
+    const tg =
+        window.Telegram.WebApp;
+
 
     tg.ready();
     tg.expand();
 
-    const socket = io();
+
+    const socket =
+        io();
+
 
     // =====================================================
     // TELEGRAM USER
@@ -1187,68 +567,116 @@
                 username: null
             };
 
+
     // =====================================================
     // STATE
     // =====================================================
 
     let coins = 100;
+
     let streak = 0;
 
     let mySpot = -1;
+
     let currentRoom = null;
+
     let isMyTurn = false;
+
     let gamePhase = "WAITING";
+
 
     // =====================================================
     // ELEMENTS
     // =====================================================
 
     const homeScreen =
-        document.getElementById("homeScreen");
+        document.getElementById(
+            "homeScreen"
+        );
+
 
     const gameScreen =
-        document.getElementById("gameScreen");
+        document.getElementById(
+            "gameScreen"
+        );
+
 
     const statusEl =
-        document.getElementById("status");
+        document.getElementById(
+            "status"
+        );
+
 
     const readyBtn =
-        document.getElementById("readyBtn");
+        document.getElementById(
+            "readyBtn"
+        );
+
 
     const myCells =
-        document.querySelectorAll(".my-cell");
+        document.querySelectorAll(
+            ".my-cell"
+        );
+
 
     const enemyCells =
-        document.querySelectorAll(".enemy-cell");
+        document.querySelectorAll(
+            ".enemy-cell"
+        );
+
 
     // =====================================================
     // USER DATA
     // =====================================================
 
     async function loadUser() {
-        try {
-            const response = await fetch("/api/user", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(user)
-            });
 
-            const data = await response.json();
+        try {
+
+            const response =
+                await fetch(
+                    "/api/user",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                user
+                            )
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
 
             if (!data.success) {
+
                 throw new Error(
                     data.message ||
                     "User yuklanmadi"
                 );
+
             }
 
+
             coins =
-                Number(data.user.coins || 0);
+                Number(
+                    data.user.coins || 0
+                );
+
 
             streak =
-                Number(data.user.streak || 0);
+                Number(
+                    data.user.streak || 0
+                );
+
 
             document.getElementById(
                 "playerName"
@@ -1257,8 +685,11 @@
                 user.first_name ||
                 "O'yinchi";
 
+
             updateCoinsDisplay();
+
             updateStreakDisplay();
+
 
         } catch (error) {
 
@@ -1267,47 +698,66 @@
                 error
             );
 
-            // Telegram ichida bo'lmagan oddiy browser test
+
             document.getElementById(
                 "playerName"
             ).innerText =
                 user.first_name ||
                 "O'yinchi";
 
+
             updateCoinsDisplay();
+
             updateStreakDisplay();
+
         }
+
     }
+
 
     // =====================================================
     // COIN
     // =====================================================
 
     function updateCoinsDisplay() {
+
         document.getElementById(
             "coinBalance"
         ).innerText =
-            Number(coins).toLocaleString();
+            Number(
+                coins
+            ).toLocaleString();
+
     }
 
+
     function updateStreakDisplay() {
+
         document.getElementById(
             "streak"
         ).innerText =
-            Number(streak);
+            Number(
+                streak
+            );
+
 
         const pods =
             document.getElementById(
                 "streakPods"
             );
 
+
         if (pods) {
+
             pods.classList.toggle(
                 "is-lit",
                 Number(streak) > 0
             );
+
         }
+
     }
+
 
     // =====================================================
     // TELEGRAM USER LOAD
@@ -1315,25 +765,36 @@
 
     loadUser();
 
+
     // =====================================================
     // HOME / GAME
     // =====================================================
 
     function openGame() {
+
         homeScreen.style.display =
             "none";
 
+
         gameScreen.style.display =
             "block";
+
     }
+
 
     function backHome() {
+
         try {
+
             socket.disconnect();
+
         } catch (e) {}
 
+
         location.reload();
+
     }
+
 
     // =====================================================
     // RANDOM GAME
@@ -1343,83 +804,115 @@
 
         openGame();
 
+
         gamePhase =
             "WAITING";
 
+
         statusEl.innerText =
             "⚡ Raqib qidirilmoqda...";
+
 
         socket.emit(
             "joinRandomGame",
             user
         );
+
     }
+
 
     // =====================================================
     // PRIVATE ROOM
     // =====================================================
 
     function openRoomModal() {
+
         document.getElementById(
             "roomModal"
-        ).style.display = "flex";
+        ).style.display =
+            "flex";
+
     }
 
+
     function closeRoomModal() {
+
         document.getElementById(
             "roomModal"
-        ).style.display = "none";
+        ).style.display =
+            "none";
+
     }
+
 
     function createRoom() {
 
         closeRoomModal();
 
+
         openGame();
+
 
         statusEl.innerText =
             "🌶️ Xona yaratilmoqda...";
+
 
         socket.emit(
             "createPrivateRoom",
             user
         );
+
     }
+
 
     function joinRoom() {
 
         const code =
             document
-                .getElementById("roomInput")
+                .getElementById(
+                    "roomInput"
+                )
                 .value
                 .trim();
+
 
         if (
             !code ||
             code.length !== 4
         ) {
+
             tg.showAlert(
                 "4 xonali kod kiriting!"
             );
 
             return;
+
         }
+
 
         closeRoomModal();
 
+
         openGame();
+
 
         statusEl.innerText =
             "🚪 Xonaga ulanilmoqda...";
 
+
         socket.emit(
             "joinPrivateRoom",
             {
-                roomCode: code,
-                userData: user
+                roomCode:
+                    code,
+
+                userData:
+                    user
             }
         );
+
     }
+
 
     // =====================================================
     // ROOM CREATED
@@ -1432,16 +925,20 @@
             currentRoom =
                 data.roomId;
 
+
             statusEl.innerText =
                 `🔥 Xona yaratildi!\n\n` +
                 `Kod: ${data.roomCode}\n\n` +
                 `Do'stingizga kodni yuboring.`;
 
+
             shareRoom(
                 data.roomCode
             );
+
         }
     );
+
 
     // =====================================================
     // WAITING
@@ -1454,8 +951,10 @@
             statusEl.innerText =
                 "⏳ Raqib kutilmoqda...\n\n" +
                 "6 soniyada odam topilmasa Bot ulanadi.";
+
         }
     );
+
 
     // =====================================================
     // MATCHED
@@ -1468,28 +967,40 @@
             currentRoom =
                 data.roomId;
 
+
             gamePhase =
                 "PLACE";
+
 
             statusEl.innerText =
                 `⚔️ Raqib: ${data.opponent.first_name}\n\n` +
                 `🌶️ Qalampiringizni yashiring.`;
 
-            mySpot = -1;
+
+            mySpot =
+                -1;
+
 
             myCells.forEach(
                 cell => {
-                    cell.innerHTML = "";
+
+                    cell.innerHTML =
+                        "";
+
                     cell.classList.remove(
                         "selected"
                     );
+
                 }
             );
 
+
             readyBtn.style.display =
                 "none";
+
         }
     );
+
 
     // =====================================================
     // ERROR
@@ -1503,9 +1014,12 @@
                 msg
             );
 
+
             location.reload();
+
         }
     );
+
 
     // =====================================================
     // SELECT PEPPER
@@ -1514,10 +1028,14 @@
     function selectMySpot(index) {
 
         if (
-            gamePhase !== "PLACE"
+            gamePhase !==
+            "PLACE"
         ) {
+
             return;
+
         }
+
 
         myCells.forEach(
             cell => {
@@ -1528,22 +1046,31 @@
                 cell.classList.remove(
                     "selected"
                 );
+
             }
         );
+
 
         mySpot =
             index;
 
+
         myCells[index].innerHTML =
             "🌶️";
 
+
         myCells[index]
             .classList
-            .add("selected");
+            .add(
+                "selected"
+            );
+
 
         readyBtn.style.display =
             "block";
+
     }
+
 
     // =====================================================
     // CONFIRM PEPPER
@@ -1554,14 +1081,19 @@
         if (
             mySpot === -1
         ) {
+
             return;
+
         }
+
 
         readyBtn.style.display =
             "none";
 
+
         statusEl.innerText =
             "⏳ Raqib tayyor bo'lishi kutilmoqda...";
+
 
         socket.emit(
             "setSpot",
@@ -1573,7 +1105,9 @@
                     mySpot
             }
         );
+
     }
+
 
     // =====================================================
     // BATTLE START
@@ -1586,16 +1120,20 @@
             gamePhase =
                 "BATTLE";
 
+
             isMyTurn =
                 data.turn ===
                 socket.id;
+
 
             statusEl.innerText =
                 isMyTurn
                     ? "🔥 SIZNING NAVBATINGIZ!"
                     : "⏳ Raqib navbati...";
+
         }
     );
+
 
     // =====================================================
     // ATTACK
@@ -1605,21 +1143,30 @@
 
         if (
             gamePhase !==
-                "BATTLE"
+            "BATTLE"
         ) {
+
             return;
+
         }
 
+
         if (!isMyTurn) {
+
             return;
+
         }
+
 
         if (
             enemyCells[index]
                 .innerHTML !== ""
         ) {
+
             return;
+
         }
+
 
         socket.emit(
             "attackSpot",
@@ -1631,7 +1178,9 @@
                     index
             }
         );
+
     }
+
 
     // =====================================================
     // TURN CHANGED
@@ -1651,6 +1200,7 @@
                 ].innerHTML =
                     "❌";
 
+
                 enemyCells[
                     data.spot
                 ].classList.add(
@@ -1664,23 +1214,29 @@
                 ].innerHTML =
                     "❌";
 
+
                 myCells[
                     data.spot
                 ].classList.add(
                     "miss"
                 );
+
             }
+
 
             isMyTurn =
                 data.nextTurn ===
                 socket.id;
 
+
             statusEl.innerText =
                 isMyTurn
                     ? "🔥 SIZNING NAVBATINGIZ!"
                     : "⏳ Raqib navbati...";
+
         }
     );
+
 
     // =====================================================
     // GAME OVER
@@ -1693,18 +1249,18 @@
             gamePhase =
                 "END";
 
+
             const won =
                 data.winner ===
                 socket.id;
 
-            if (won) {
 
-                // Server database'da coin beradi.
-                // Frontendda yana +100 qilmaymiz.
+            if (won) {
 
                 statusEl.innerText =
                     "🏆 SIZ YUTDINGIZ!\n\n" +
                     "+20 🌶️";
+
 
                 if (
                     data.hitSpot !==
@@ -1715,25 +1271,28 @@
                         data.hitSpot
                     ].innerHTML =
                         "🌶️";
+
                 }
+
 
                 tg.HapticFeedback
                     ?.notificationOccurred(
                         "success"
                     );
 
-                // Serverdagi yangi balansni
-                // qayta olish
+
                 setTimeout(
                     loadUser,
                     500
                 );
+
 
             } else {
 
                 statusEl.innerText =
                     "❌ YUTQAZDINGIZ!\n\n" +
                     "Coin o'zgarmadi.";
+
 
                 if (
                     data.hitSpot !==
@@ -1744,25 +1303,32 @@
                         data.hitSpot
                     ].innerHTML =
                         "🌶️";
+
                 }
+
 
                 tg.HapticFeedback
                     ?.notificationOccurred(
                         "error"
                     );
 
+
                 setTimeout(
                     loadUser,
                     500
                 );
+
             }
+
 
             setTimeout(
                 showResultActions,
                 1500
             );
+
         }
     );
+
 
     // =====================================================
     // RESULT
@@ -1775,6 +1341,7 @@
                 "🔥 Yana bir marta o'ynaysizmi?"
             );
 
+
         if (again) {
 
             location.reload();
@@ -1782,8 +1349,11 @@
         } else {
 
             backHome();
+
         }
+
     }
+
 
     // =====================================================
     // REFERRAL
@@ -1794,6 +1364,7 @@
         const botUsername =
             "YOUR_BOT_USERNAME";
 
+
         if (
             botUsername ===
             "YOUR_BOT_USERNAME"
@@ -1803,20 +1374,26 @@
                 "Bot username hali sozlanmagan."
             );
 
+
             return;
+
         }
+
 
         const referralCode =
             user.id;
+
 
         const link =
             `https://t.me/${botUsername}` +
             `?start=ref_${referralCode}`;
 
+
         const text =
             "🌶️ Qalampirga qo'shil!\n\n" +
             "Meni yuta olasanmi? 😈\n\n" +
             "👇 Duelga kir";
+
 
         const url =
             "https://t.me/share/url" +
@@ -1825,10 +1402,13 @@
             "&text=" +
             encodeURIComponent(text);
 
+
         tg.openTelegramLink(
             url
         );
+
     }
+
 
     // =====================================================
     // SHARE ROOM
@@ -1841,21 +1421,27 @@
         const botUsername =
             "YOUR_BOT_USERNAME";
 
+
         if (
             botUsername ===
             "YOUR_BOT_USERNAME"
         ) {
+
             return;
+
         }
+
 
         const link =
             `https://t.me/${botUsername}` +
             `?start=room_${roomCode}`;
 
+
         const text =
             "🌶️ Seni Qalampir dueliga chaqiraman!\n\n" +
             "🔥 Meni yuta olasanmi?\n\n" +
             "👇 Duelga kir";
+
 
         const url =
             "https://t.me/share/url" +
@@ -1864,15 +1450,20 @@
             "&text=" +
             encodeURIComponent(text);
 
+
         setTimeout(
             () => {
+
                 tg.openTelegramLink(
                     url
                 );
+
             },
             700
         );
+
     }
+
 
     // =====================================================
     // DAILY BONUS
@@ -1885,10 +1476,15 @@
                 "qalampir_daily_bonus"
             );
 
+
         const today =
             new Date()
                 .toISOString()
-                .slice(0, 10);
+                .slice(
+                    0,
+                    10
+                );
+
 
         if (
             lastBonus ===
@@ -1899,18 +1495,24 @@
                 "🎁 Bugungi bonusni allaqachon oldingiz!"
             );
 
+
             return;
+
         }
+
 
         localStorage.setItem(
             "qalampir_daily_bonus",
             today
         );
 
+
         tg.showAlert(
             "🎁 Daily bonus tizimi tez orada serverga ulanadi."
         );
+
     }
+
 
     // =====================================================
     // LEADERBOARD
@@ -1923,15 +1525,19 @@
                 "leaderboardModal"
             );
 
+
         modal.style.display =
             "flex";
+
 
         const box =
             modal.querySelector(
                 ".modal-box"
             );
 
+
         box.innerHTML = `
+
             <div class="modal-title">
                 🏆 TOP O'YINCHILAR
             </div>
@@ -1946,7 +1552,9 @@
             >
                 Yopish
             </button>
+
         `;
+
 
         try {
 
@@ -1955,45 +1563,60 @@
                     "/api/leaderboard?limit=10"
                 );
 
+
             const data =
                 await response.json();
+
 
             if (
                 !data.success
             ) {
+
                 throw new Error(
                     "Leaderboard xatosi"
                 );
+
             }
+
 
             const list =
                 document.getElementById(
                     "leaderboardList"
                 );
 
+
             if (
                 !data.leaderboard ||
                 data.leaderboard.length === 0
             ) {
 
-                list.innerHTML =
-                    `
+                list.innerHTML = `
+
                     <div style="
                         text-align:center;
                         padding:20px;
                         color:#8b96a8;
                     ">
+
                         Hali o'yinchilar yo'q.
+
                     </div>
-                    `;
+
+                `;
+
 
                 return;
+
             }
+
 
             list.innerHTML =
                 data.leaderboard
                     .map(
-                        (player, index) => {
+                        (
+                            player,
+                            index
+                        ) => {
 
                             const medals = [
                                 "🥇",
@@ -2001,44 +1624,57 @@
                                 "🥉"
                             ];
 
+
                             const rank =
                                 medals[index] ||
                                 String(
                                     index + 1
                                 );
 
+
                             const name =
                                 player.first_name ||
                                 player.username ||
                                 "Player";
+
 
                             const score =
                                 Number(
                                     player.coins || 0
                                 ).toLocaleString();
 
+
                             return `
+
                                 <div class="rank-row">
+
                                     <div class="rank-number">
                                         ${rank}
                                     </div>
+
 
                                     <div class="rank-avatar">
                                         🌶️
                                     </div>
 
+
                                     <div class="rank-name">
                                         ${escapeHtml(name)}
                                     </div>
 
+
                                     <div class="rank-score">
                                         ${score} 🌶️
                                     </div>
+
                                 </div>
+
                             `;
+
                         }
                     )
                     .join("");
+
 
         } catch (error) {
 
@@ -2047,20 +1683,27 @@
                 error
             );
 
+
             document.getElementById(
                 "leaderboardList"
-            ).innerHTML =
-                `
+            ).innerHTML = `
+
                 <div style="
                     text-align:center;
                     padding:20px;
                     color:#ff4d5e;
                 ">
+
                     Leaderboardni yuklab bo'lmadi.
+
                 </div>
-                `;
+
+            `;
+
         }
+
     }
+
 
     // =====================================================
     // HTML SECURITY
@@ -2071,27 +1714,34 @@
     ) {
 
         return String(value)
+
             .replace(
                 /&/g,
                 "&amp;"
             )
+
             .replace(
                 /</g,
                 "&lt;"
             )
+
             .replace(
                 />/g,
                 "&gt;"
             )
+
             .replace(
                 /"/g,
                 "&quot;"
             )
+
             .replace(
                 /'/g,
                 "&#039;"
             );
+
     }
+
 
     // =====================================================
     // CLOSE LEADERBOARD
@@ -2103,7 +1753,9 @@
             "leaderboardModal"
         ).style.display =
             "none";
+
     }
+
 
     // =====================================================
     // SKINS
@@ -2112,12 +1764,19 @@
     function showSkins() {
 
         tg.showAlert(
+
             "🎨 Skinlar tez orada ochiladi!\n\n" +
+
             "🔥 Fire Pepper\n" +
+
             "💎 Diamond Pepper\n" +
+
             "👑 King Pepper"
+
         );
+
     }
+
 
     // =====================================================
     // TELEGRAM MAIN BUTTON
@@ -2132,17 +1791,22 @@
             .show()
             .onClick(
                 () => {
+
                     startRandom();
+
                 }
             );
 
     } catch (e) {
+
         console.log(
             "Telegram MainButton mavjud emas."
         );
+
     }
 
 </script>
 
 </body>
 </html>
+```
