@@ -102,13 +102,13 @@ async function updateGameResult(userId, result) {
     let transactionType = "";
 
     if (result === "win") {
-      balanceChange = 100;
+      balanceChange = 20;
       newWins += 1;
       newStreak += 1;
       xpChange = 50;
       transactionType = "game_win";
     } else if (result === "loss") {
-      balanceChange = -10;
+      balanceChange = 0;
       newLosses += 1;
       newStreak = 0;
       xpChange = 10;
