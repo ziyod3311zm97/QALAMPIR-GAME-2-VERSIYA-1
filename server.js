@@ -181,6 +181,57 @@ app.get(
 
 
 /* =====================================================
+   USER (yangi frontend uchun - oddiy user obyekti bilan)
+===================================================== */
+
+app.post(
+  "/api/user",
+  async (req, res) => {
+
+    try {
+      const incomingUser = req.body;
+
+      if (!incomingUser || !incomingUser.id) {
+        return res.status(400).json({
+          success: false,
+          message: "User ma'lumoti yuborilmadi"
+        });
+      }
+
+      await createOrUpdateUser(incomingUser);
+
+      const dbUser =
+        await getUser(incomingUser.id);
+
+      res.json({
+        success: true,
+        user: {
+          id: dbUser.id,
+          username: dbUser.username,
+          first_name: dbUser.first_name,
+          last_name: dbUser.last_name,
+          coins: Number(dbUser.balance),
+          wins: dbUser.wins,
+          losses: dbUser.losses,
+          streak: dbUser.streak,
+          level: dbUser.level,
+          xp: dbUser.xp
+        }
+      });
+
+    } catch (error) {
+      console.error("api/user xatosi:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "User ma'lumotlarini olishda xatolik"
+      });
+    }
+  }
+);
+
+
+/* =====================================================
    GAME RESULT
 ===================================================== */
 
@@ -244,9 +295,22 @@ app.get(
       const users =
         await getLeaderboard(limit);
 
+      const leaderboard =
+        users.map((u) => ({
+          id: u.id,
+          username: u.username,
+          first_name: u.first_name,
+          coins: Number(u.balance),
+          wins: u.wins,
+          losses: u.losses,
+          streak: u.streak,
+          level: u.level,
+          xp: u.xp
+        }));
+
       res.json({
         success: true,
-        users
+        leaderboard
       });
 
     } catch (error) {
