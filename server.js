@@ -6,12 +6,27 @@ const path = require("path");
 const crypto = require("crypto");
 const { Server } = require("socket.io");
 
+const TelegramBot = require("node-telegram-bot-api");
+
 const {
   initDatabase,
   getUser,
   createOrUpdateUser,
   updateGameResult,
-  getLeaderboard
+  getLeaderboard,
+  getUserWithFreshEnergy,
+  spendEnergy,
+  claimDailyBonus,
+  getSkinCatalog,
+  buySkin,
+  addCoins,
+  getAdminStats,
+  getRevenueStats,
+  recordStarsPayment,
+  findUserByIdOrUsername,
+  setBanned,
+  getAllUserIds,
+  setUserTheme
 } = require("./db");
 
 const app = express();
@@ -24,6 +39,370 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "public")));
+
+
+/* =====================================================
+   TELEGRAM STARS - TO'LOVLAR
+===================================================== */
+
+const bot =
+  process.env.BOT_TOKEN
+    ? new TelegramBot(process.env.BOT_TOKEN, { polling: true })
+    : null;
+
+if (!bot) {
+  console.error(
+    "BOT_TOKEN topilmadi - Stars to'lovlari ishlamaydi."
+  );
+}
+
+const ADMIN_IDS = new Set(
+  (process.env.ADMIN_IDS || "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .map(Number)
+);
+
+function isAdmin(userId) {
+  return ADMIN_IDS.has(Number(userId));
+}
+
+const COIN_PACKAGES = {
+  small: {
+    id: "small",
+    coins: 500,
+    stars: 50,
+    label: "500 🌶️"
+  },
+  medium: {
+    id: "medium",
+    coins: 1200,
+    stars: 100,
+    label: "1200 🌶️ (+20% bonus)"
+  },
+  large: {
+    id: "large",
+    coins: 3000,
+    stars: 200,
+    label: "3000 🌶️ (+50% bonus)"
+  }
+};
+
+async function createInvoiceLink({ title, description, payload, prices }) {
+  const response = await fetch(
+    `https://api.telegram.org/bot${process.env.BOT_TOKEN}/createInvoiceLink`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        description,
+        payload,
+        currency: "XTR",
+        prices
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    throw new Error(
+      data.description || "Invoice yaratib bo'lmadi"
+    );
+  }
+
+  return data.result;
+}
+
+if (bot) {
+
+  bot.on("pre_checkout_query", async (query) => {
+    try {
+      await bot.answerPreCheckoutQuery(query.id, true);
+    } catch (error) {
+      console.error("Pre-checkout xatosi:", error);
+    }
+  });
+
+  bot.on("message", async (msg) => {
+
+    if (!msg.successful_payment) {
+      return;
+    }
+
+    try {
+      const payload =
+        JSON.parse(msg.successful_payment.invoice_payload);
+
+      const pkg = COIN_PACKAGES[payload.packageId];
+
+      if (pkg) {
+        await addCoins(
+          payload.userId,
+          pkg.coins,
+          "stars_purchase"
+        );
+
+        await recordStarsPayment(
+          payload.userId,
+          payload.packageId,
+          msg.successful_payment.total_amount,
+          pkg.coins,
+          msg.successful_payment.telegram_payment_charge_id
+        );
+      }
+
+      await bot.sendMessage(
+        msg.chat.id,
+        `✅ To'lov qabul qilindi!\n\n+${pkg ? pkg.coins : 0} 🌶️ hisobingizga qo'shildi.`
+      );
+
+    } catch (error) {
+      console.error("Successful payment xatosi:", error);
+    }
+  });
+
+  bot.on("polling_error", (error) => {
+    console.error("Bot polling xatosi:", error.message);
+  });
+
+
+  /* ===================================================
+     ADMIN BUYRUQLARI
+  =================================================== */
+
+  bot.onText(/^\/admin$/, async (msg) => {
+
+    if (!isAdmin(msg.from.id)) {
+      return;
+    }
+
+    await bot.sendMessage(
+      msg.chat.id,
+      "🛠 *ADMIN PANEL*\n\n" +
+      "📊 /stats — umumiy statistika\n" +
+      "💰 /revenue — Stars daromadi\n" +
+      "🔍 /finduser <id yoki @username> — o'yinchini qidirish\n" +
+      "💵 /addcoins <id> <miqdor> — coin qo'shish (manfiy son ayiradi)\n" +
+      "🚫 /ban <id> — bloklash\n" +
+      "✅ /unban <id> — blokdan chiqarish\n" +
+      "📢 /broadcast <matn> — hammaga xabar yuborish",
+      { parse_mode: "Markdown" }
+    );
+  });
+
+
+  bot.onText(/^\/stats$/, async (msg) => {
+
+    if (!isAdmin(msg.from.id)) {
+      return;
+    }
+
+    try {
+      const stats = await getAdminStats();
+
+      await bot.sendMessage(
+        msg.chat.id,
+        "📊 *STATISTIKA*\n\n" +
+        `👥 Jami o'yinchilar: ${stats.total_users}\n` +
+        `🌶️ Aylanmadagi coin: ${stats.total_coins}\n` +
+        `🏆 Jami o'yinlar: ${stats.total_games}\n` +
+        `🚫 Bloklangan: ${stats.total_banned}`,
+        { parse_mode: "Markdown" }
+      );
+
+    } catch (error) {
+      console.error("Admin stats xatosi:", error);
+      bot.sendMessage(msg.chat.id, "Xatolik yuz berdi.");
+    }
+  });
+
+
+  bot.onText(/^\/revenue$/, async (msg) => {
+
+    if (!isAdmin(msg.from.id)) {
+      return;
+    }
+
+    try {
+      const revenue = await getRevenueStats(10);
+
+      const recentText =
+        revenue.recent.length === 0
+          ? "Hali xaridlar yo'q."
+          : revenue.recent
+              .map((r) => {
+                const name =
+                  r.first_name ||
+                  r.username ||
+                  r.user_id;
+
+                return `• ${name}: ${r.stars_amount}⭐ → ${r.coins_amount}🌶️`;
+              })
+              .join("\n");
+
+      await bot.sendMessage(
+        msg.chat.id,
+        "💰 *STARS DAROMADI*\n\n" +
+        `⭐ Jami: ${revenue.totalStars} Stars\n` +
+        `🛒 Xaridlar soni: ${revenue.totalPurchases}\n\n` +
+        "So'nggi xaridlar:\n" +
+        recentText,
+        { parse_mode: "Markdown" }
+      );
+
+    } catch (error) {
+      console.error("Revenue xatosi:", error);
+      bot.sendMessage(msg.chat.id, "Xatolik yuz berdi.");
+    }
+  });
+
+
+  bot.onText(/^\/finduser (\S+)$/, async (msg, match) => {
+
+    if (!isAdmin(msg.from.id)) {
+      return;
+    }
+
+    try {
+      const user =
+        await findUserByIdOrUsername(match[1]);
+
+      if (!user) {
+        bot.sendMessage(msg.chat.id, "Topilmadi.");
+        return;
+      }
+
+      await bot.sendMessage(
+        msg.chat.id,
+        `👤 ${user.first_name || "-"} (@${user.username || "-"})\n` +
+        `ID: \`${user.id}\`\n` +
+        `🌶️ Balans: ${user.balance}\n` +
+        `🏆 G'alaba: ${user.wins} | ❌ Mag'lubiyat: ${user.losses}\n` +
+        `🔋 Jon: ${user.energy}/5\n` +
+        `${user.is_banned ? "🚫 BLOKLANGAN" : "✅ Faol"}`,
+        { parse_mode: "Markdown" }
+      );
+
+    } catch (error) {
+      console.error("Finduser xatosi:", error);
+      bot.sendMessage(msg.chat.id, "Xatolik yuz berdi.");
+    }
+  });
+
+
+  bot.onText(/^\/addcoins (\S+) (-?\d+)$/, async (msg, match) => {
+
+    if (!isAdmin(msg.from.id)) {
+      return;
+    }
+
+    try {
+      const userId = Number(match[1]);
+      const amount = Number(match[2]);
+
+      const updated =
+        await addCoins(userId, amount, "admin_adjustment");
+
+      await bot.sendMessage(
+        msg.chat.id,
+        `✅ Yangilandi.\n\nYangi balans: ${updated.balance} 🌶️`
+      );
+
+    } catch (error) {
+      console.error("Addcoins xatosi:", error);
+      bot.sendMessage(msg.chat.id, "Foydalanuvchi topilmadi yoki xatolik yuz berdi.");
+    }
+  });
+
+
+  bot.onText(/^\/ban (\d+)$/, async (msg, match) => {
+
+    if (!isAdmin(msg.from.id)) {
+      return;
+    }
+
+    try {
+      const updated =
+        await setBanned(Number(match[1]), true);
+
+      bot.sendMessage(
+        msg.chat.id,
+        updated ? "🚫 Bloklandi." : "Foydalanuvchi topilmadi."
+      );
+
+    } catch (error) {
+      console.error("Ban xatosi:", error);
+      bot.sendMessage(msg.chat.id, "Xatolik yuz berdi.");
+    }
+  });
+
+
+  bot.onText(/^\/unban (\d+)$/, async (msg, match) => {
+
+    if (!isAdmin(msg.from.id)) {
+      return;
+    }
+
+    try {
+      const updated =
+        await setBanned(Number(match[1]), false);
+
+      bot.sendMessage(
+        msg.chat.id,
+        updated ? "✅ Blokdan chiqarildi." : "Foydalanuvchi topilmadi."
+      );
+
+    } catch (error) {
+      console.error("Unban xatosi:", error);
+      bot.sendMessage(msg.chat.id, "Xatolik yuz berdi.");
+    }
+  });
+
+
+  bot.onText(/^\/broadcast ([\s\S]+)$/, async (msg, match) => {
+
+    if (!isAdmin(msg.from.id)) {
+      return;
+    }
+
+    const text = match[1];
+
+    try {
+      const ids = await getAllUserIds();
+
+      await bot.sendMessage(
+        msg.chat.id,
+        `📢 Yuborilmoqda: ${ids.length} ta foydalanuvchiga...`
+      );
+
+      let success = 0;
+      let failed = 0;
+
+      for (const id of ids) {
+        try {
+          await bot.sendMessage(id, text);
+          success += 1;
+        } catch (sendError) {
+          failed += 1;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 40));
+      }
+
+      await bot.sendMessage(
+        msg.chat.id,
+        `✅ Tugadi.\n\nYuborildi: ${success}\nXato: ${failed}`
+      );
+
+    } catch (error) {
+      console.error("Broadcast xatosi:", error);
+      bot.sendMessage(msg.chat.id, "Xatolik yuz berdi.");
+    }
+  });
+}
 
 
 /* =====================================================
@@ -198,10 +577,13 @@ app.post(
         });
       }
 
-      await createOrUpdateUser(incomingUser);
+      await createOrUpdateUser(
+        incomingUser,
+        incomingUser.referralCode
+      );
 
       const dbUser =
-        await getUser(incomingUser.id);
+        await getUserWithFreshEnergy(incomingUser.id);
 
       res.json({
         success: true,
@@ -215,7 +597,15 @@ app.post(
           losses: dbUser.losses,
           streak: dbUser.streak,
           level: dbUser.level,
-          xp: dbUser.xp
+          xp: dbUser.xp,
+          energy: dbUser.energy,
+          maxEnergy: 5,
+          equippedSkin: dbUser.equipped_skin,
+          theme: dbUser.theme,
+          dailyBonusAvailable:
+            !dbUser.last_bonus_date ||
+            new Date(dbUser.last_bonus_date).toDateString() !==
+              new Date().toDateString()
         }
       });
 
@@ -225,6 +615,245 @@ app.post(
       res.status(500).json({
         success: false,
         message: "User ma'lumotlarini olishda xatolik"
+      });
+    }
+  }
+);
+
+
+/* =====================================================
+   COIN SOTIB OLISH (Telegram Stars)
+===================================================== */
+
+app.post(
+  "/api/create-invoice",
+  async (req, res) => {
+
+    try {
+      const { id, packageId } = req.body || {};
+      const pkg = COIN_PACKAGES[packageId];
+
+      if (!id || !pkg) {
+        return res.status(400).json({
+          success: false,
+          message: "Noto'g'ri so'rov"
+        });
+      }
+
+      if (!bot) {
+        return res.status(500).json({
+          success: false,
+          message: "To'lov tizimi hozircha sozlanmagan"
+        });
+      }
+
+      const payload = JSON.stringify({
+        userId: id,
+        packageId
+      });
+
+      const invoiceLink = await createInvoiceLink({
+        title: `${pkg.coins} 🌶️ Qalampir Coin`,
+        description: `Qalampir o'yini uchun ${pkg.coins} ta coin`,
+        payload,
+        prices: [
+          { label: pkg.label, amount: pkg.stars }
+        ]
+      });
+
+      res.json({
+        success: true,
+        invoiceLink
+      });
+
+    } catch (error) {
+      console.error("Invoice yaratish xatosi:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Invoice yaratib bo'lmadi"
+      });
+    }
+  }
+);
+
+
+/* =====================================================
+   KUNLIK BONUS
+===================================================== */
+
+app.post(
+  "/api/daily-bonus",
+  async (req, res) => {
+
+    try {
+      const userId = req.body?.id;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "User id yuborilmadi"
+        });
+      }
+
+      const { user, amount } =
+        await claimDailyBonus(userId);
+
+      res.json({
+        success: true,
+        amount,
+        user: {
+          coins: Number(user.balance)
+        }
+      });
+
+    } catch (error) {
+
+      if (error.code === "ALREADY_CLAIMED") {
+        return res.status(400).json({
+          success: false,
+          code: "ALREADY_CLAIMED",
+          message: "Bugungi bonusni allaqachon oldingiz"
+        });
+      }
+
+      console.error("Daily bonus xatosi:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Bonusni olishda xatolik"
+      });
+    }
+  }
+);
+
+
+/* =====================================================
+   SKINLAR
+===================================================== */
+
+app.post(
+  "/api/skins",
+  async (req, res) => {
+
+    try {
+      const userId = req.body?.id;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "User id yuborilmadi"
+        });
+      }
+
+      const skins =
+        await getSkinCatalog(userId);
+
+      res.json({
+        success: true,
+        skins
+      });
+
+    } catch (error) {
+      console.error("Skins xatosi:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Skinlarni olishda xatolik"
+      });
+    }
+  }
+);
+
+
+app.post(
+  "/api/skins/buy",
+  async (req, res) => {
+
+    try {
+      const { id, skin } = req.body || {};
+
+      if (!id || !skin) {
+        return res.status(400).json({
+          success: false,
+          message: "Ma'lumot yetarli emas"
+        });
+      }
+
+      const updatedUser =
+        await buySkin(id, skin);
+
+      res.json({
+        success: true,
+        coins: Number(updatedUser.balance),
+        equippedSkin: updatedUser.equipped_skin
+      });
+
+    } catch (error) {
+
+      if (error.code === "NOT_ENOUGH_COINS") {
+        return res.status(400).json({
+          success: false,
+          code: "NOT_ENOUGH_COINS",
+          message: "Coin yetarli emas"
+        });
+      }
+
+      if (error.code === "SKIN_NOT_FOUND") {
+        return res.status(404).json({
+          success: false,
+          code: "SKIN_NOT_FOUND",
+          message: "Skin topilmadi"
+        });
+      }
+
+      console.error("Skin sotib olish xatosi:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Xatolik yuz berdi"
+      });
+    }
+  }
+);
+
+
+/* =====================================================
+   MAVZU (THEME)
+===================================================== */
+
+app.post(
+  "/api/theme",
+  async (req, res) => {
+
+    try {
+      const { id, theme } = req.body || {};
+
+      if (!id || !theme) {
+        return res.status(400).json({
+          success: false,
+          message: "Ma'lumot yetarli emas"
+        });
+      }
+
+      await setUserTheme(id, theme);
+
+      res.json({ success: true });
+
+    } catch (error) {
+
+      if (error.code === "INVALID_THEME") {
+        return res.status(400).json({
+          success: false,
+          message: "Noto'g'ri mavzu"
+        });
+      }
+
+      console.error("Theme xatosi:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Xatolik yuz berdi"
       });
     }
   }
@@ -503,7 +1132,26 @@ io.on("connection", (socket) => {
 
   /* ---------- TEZKOR O'YIN (tasodifiy raqib) ---------- */
 
-  socket.on("joinRandomGame", (user) => {
+  socket.on("joinRandomGame", async (user) => {
+
+    try {
+      await spendEnergy(user.id);
+    } catch (error) {
+      if (error.code === "BANNED") {
+        socket.emit(
+          "errorMsg",
+          "🚫 Siz bloklangansiz. O'yin o'ynay olmaysiz."
+        );
+      } else if (error.code === "NO_ENERGY") {
+        socket.emit(
+          "errorMsg",
+          "🔋 Jon tugadi! Biroz kuting (har 10 daqiqada +1 jon) yoki do'kondan sotib oling."
+        );
+      } else {
+        socket.emit("errorMsg", "Xatolik yuz berdi, qayta urinib ko'ring.");
+      }
+      return;
+    }
 
     const staleIdx = waitingQueue.findIndex(
       (w) => w.socketId === socket.id
@@ -592,7 +1240,26 @@ io.on("connection", (socket) => {
 
   /* ---------- DO'ST BILAN O'YNASH (xona) ---------- */
 
-  socket.on("createPrivateRoom", (user) => {
+  socket.on("createPrivateRoom", async (user) => {
+
+    try {
+      await spendEnergy(user.id);
+    } catch (error) {
+      if (error.code === "BANNED") {
+        socket.emit(
+          "errorMsg",
+          "🚫 Siz bloklangansiz. O'yin o'ynay olmaysiz."
+        );
+      } else if (error.code === "NO_ENERGY") {
+        socket.emit(
+          "errorMsg",
+          "🔋 Jon tugadi! Biroz kuting (har 10 daqiqada +1 jon) yoki do'kondan sotib oling."
+        );
+      } else {
+        socket.emit("errorMsg", "Xatolik yuz berdi, qayta urinib ko'ring.");
+      }
+      return;
+    }
 
     const roomId = generateRoomId();
     const code = generateRoomCode();
@@ -614,13 +1281,32 @@ io.on("connection", (socket) => {
   });
 
 
-  socket.on("joinPrivateRoom", ({ roomCode, userData } = {}) => {
+  socket.on("joinPrivateRoom", async ({ roomCode, userData } = {}) => {
 
     const roomId = roomCodes.get(roomCode);
     const room = roomId && rooms.get(roomId);
 
     if (!room || room.players.length >= 2) {
       socket.emit("errorMsg", "Xona topilmadi yoki allaqachon to'lgan.");
+      return;
+    }
+
+    try {
+      await spendEnergy(userData.id);
+    } catch (error) {
+      if (error.code === "BANNED") {
+        socket.emit(
+          "errorMsg",
+          "🚫 Siz bloklangansiz. O'yin o'ynay olmaysiz."
+        );
+      } else if (error.code === "NO_ENERGY") {
+        socket.emit(
+          "errorMsg",
+          "🔋 Jon tugadi! Biroz kuting (har 10 daqiqada +1 jon) yoki do'kondan sotib oling."
+        );
+      } else {
+        socket.emit("errorMsg", "Xatolik yuz berdi, qayta urinib ko'ring.");
+      }
       return;
     }
 
