@@ -727,6 +727,18 @@
             box-shadow: none;
         }
 
+        .cell-pepper {
+            width: 72%;
+            height: 72%;
+            object-fit: contain;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .45));
+        }
+
+        .cell-miss-icon {
+            width: 58%;
+            height: 58%;
+        }
+
         .divider {
             height: 1px;
             margin: 20px 0;
@@ -1865,6 +1877,39 @@
         chili_void: "/assets/skins/chili_void.png"
     };
 
+    // Jangdagi qalampir belgisi - foydalanuvchi sotib olgan/kiygan
+    // skin rasmidan foydalanadi (emoji o'rniga haqiqiy grafika).
+    function pepperIconHtml() {
+        const src =
+            SKIN_IMAGE[equippedSkin] ||
+            SKIN_IMAGE.chili_v1;
+
+        return `<img class="cell-pepper" src="${src}" alt="">`;
+    }
+
+    // "Yo'q" (miss) belgisi - oddiy emoji o'rniga chizilgan
+    // po'lat qilichlar SVG'i.
+    const MISS_ICON_SVG = `
+        <svg class="cell-miss-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="bladeGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#f3f6fa"/>
+                    <stop offset="55%" stop-color="#aab4c2"/>
+                    <stop offset="100%" stop-color="#5c6774"/>
+                </linearGradient>
+            </defs>
+            <g stroke="url(#bladeGrad)" stroke-width="3.4" stroke-linecap="round">
+                <line x1="8" y1="8" x2="40" y2="40"/>
+                <line x1="40" y1="8" x2="8" y2="40"/>
+            </g>
+            <g stroke="#7a8391" stroke-width="1" stroke-linecap="round" opacity=".6">
+                <line x1="8" y1="8" x2="40" y2="40"/>
+                <line x1="40" y1="8" x2="8" y2="40"/>
+            </g>
+            <circle cx="24" cy="24" r="3.4" fill="#3a3126" stroke="#caa53d" stroke-width="1.4"/>
+        </svg>
+    `;
+
     function updateEnergyDisplay() {
 
         const el =
@@ -2132,7 +2177,7 @@
             index;
 
         myCells[index].innerHTML =
-            "🌶️";
+            pepperIconHtml();
 
         myCells[index]
             .classList
@@ -2246,7 +2291,7 @@
                 enemyCells[
                     data.spot
                 ].innerHTML =
-                    "❌";
+                    MISS_ICON_SVG;
 
                 enemyCells[
                     data.spot
@@ -2259,7 +2304,7 @@
                 myCells[
                     data.spot
                 ].innerHTML =
-                    "❌";
+                    MISS_ICON_SVG;
 
                 myCells[
                     data.spot
@@ -2311,7 +2356,7 @@
                     enemyCells[
                         data.hitSpot
                     ].innerHTML =
-                        "🌶️";
+                        pepperIconHtml();
                 }
 
                 tg.HapticFeedback
@@ -2340,7 +2385,7 @@
                     myCells[
                         data.hitSpot
                     ].innerHTML =
-                        "🌶️";
+                        pepperIconHtml();
                 }
 
                 tg.HapticFeedback
