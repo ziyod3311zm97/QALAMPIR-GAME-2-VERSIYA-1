@@ -1645,7 +1645,7 @@
                 Boolean(data.user.dailyBonusAvailable);
 
             applyTheme(
-                data.user.theme || "ember"
+                data.user.theme || "classic_dark"
             );
 
             document.getElementById(
@@ -1725,8 +1725,8 @@
     // =====================================================
 
     const THEMES = {
-        ember: {
-            name: "Klassik Olov",
+        classic_dark: {
+            name: "Klassik Qorong'i",
             swatch: ["#ff4a1f", "#140d0a"],
             vars: {
                 "--bg": "#140d0a", "--bg-raise": "#1f1610", "--bg-raise-2": "#2a1c14",
@@ -1736,107 +1736,63 @@
                 "--cream": "#fff4e8"
             }
         },
-        neon: {
-            name: "Neon Glow",
-            swatch: ["#b34bff", "#130a1e"],
+        neon_cyber: {
+            name: "Neon Uslub",
+            swatch: ["#b34bff", "#0d0620"],
             vars: {
-                "--bg": "#130a1e", "--bg-raise": "#1e1230", "--bg-raise-2": "#2a1a42",
-                "--line": "rgba(214,150,255,.18)", "--line-soft": "rgba(214,150,255,.09)",
-                "--ember": "#b34bff", "--ember-deep": "#6f1fb0", "--habanero": "#ff5fd0",
-                "--ash": "#a595c2", "--ash-dim": "#6c5f8a",
-                "--cream": "#f6eeff"
+                "--bg": "#0d0620", "--bg-raise": "#17102f", "--bg-raise-2": "#211642",
+                "--line": "rgba(190,140,255,.2)", "--line-soft": "rgba(190,140,255,.1)",
+                "--ember": "#b34bff", "--ember-deep": "#6f1fb0", "--habanero": "#3ad6ff",
+                "--ash": "#ab9dcf", "--ash-dim": "#6d5f95",
+                "--cream": "#f3ecff"
             }
         },
-        royal: {
-            name: "Oltin Royal",
-            swatch: ["#e8a12c", "#160f08"],
+        fantasy_fire: {
+            name: "Fantaziya Olovi",
+            swatch: ["#ff7a1a", "#1c0d04"],
             vars: {
-                "--bg": "#160f08", "--bg-raise": "#241a0f", "--bg-raise-2": "#332413",
-                "--line": "rgba(255,209,110,.18)", "--line-soft": "rgba(255,209,110,.09)",
-                "--ember": "#e8a12c", "--ember-deep": "#9c6a12", "--habanero": "#ffcf5c",
-                "--ash": "#b6a284", "--ash-dim": "#7a6d57",
-                "--cream": "#fff6e4"
+                "--bg": "#1c0d04", "--bg-raise": "#2c1408", "--bg-raise-2": "#3d1c0a",
+                "--line": "rgba(255,180,90,.2)", "--line-soft": "rgba(255,180,90,.1)",
+                "--ember": "#ff7a1a", "--ember-deep": "#b23c05", "--habanero": "#ffcf5c",
+                "--ash": "#c2a184", "--ash-dim": "#86664a",
+                "--cream": "#fff2df"
             }
         },
-        cyber: {
-            name: "Cyber Ko'k",
-            swatch: ["#2ea4ff", "#080f16"],
+        futuristic_glass: {
+            name: "Shisha Stil",
+            swatch: ["#33aaff", "#050a12"],
             vars: {
-                "--bg": "#080f16", "--bg-raise": "#0f1b28", "--bg-raise-2": "#14263a",
-                "--line": "rgba(110,197,255,.18)", "--line-soft": "rgba(110,197,255,.09)",
-                "--ember": "#2ea4ff", "--ember-deep": "#0c5fa8", "--habanero": "#5fd4ff",
-                "--ash": "#7fa0bd", "--ash-dim": "#526b80",
+                "--bg": "#050a12", "--bg-raise": "#0b141f", "--bg-raise-2": "#11202f",
+                "--line": "rgba(120,200,255,.22)", "--line-soft": "rgba(120,200,255,.1)",
+                "--ember": "#33aaff", "--ember-deep": "#0d5faa", "--habanero": "#7fe0ff",
+                "--ash": "#7fa3c2", "--ash-dim": "#4f6c85",
                 "--cream": "#eaf6ff"
             }
         },
-        forest: {
-            name: "O'rmon",
-            swatch: ["#3fbf5e", "#0c130c"],
+        retro_pixel: {
+            name: "Pixel Stil",
+            swatch: ["#ff4fc3", "#170a28"],
             vars: {
-                "--bg": "#0c130c", "--bg-raise": "#141f14", "--bg-raise-2": "#1c2c1c",
-                "--line": "rgba(150,224,140,.16)", "--line-soft": "rgba(150,224,140,.08)",
-                "--ember": "#3fbf5e", "--ember-deep": "#1f7a37", "--habanero": "#7fe08c",
-                "--ash": "#8fae8a", "--ash-dim": "#5c7359",
-                "--cream": "#eefde1"
+                "--bg": "#170a28", "--bg-raise": "#24123f", "--bg-raise-2": "#331a58",
+                "--line": "rgba(255,130,220,.2)", "--line-soft": "rgba(255,130,220,.1)",
+                "--ember": "#ff4fc3", "--ember-deep": "#a3208a", "--habanero": "#ffd23d",
+                "--ash": "#b39bd0", "--ash-dim": "#715d92",
+                "--cream": "#fdeeff"
             }
         },
-        sunset: {
-            name: "Quyosh Botishi",
-            swatch: ["#ff6a3d", "#170d0c"],
+        dark_neon_green: {
+            name: "Yashil Neon",
+            swatch: ["#3fe073", "#050f08"],
             vars: {
-                "--bg": "#170d0c", "--bg-raise": "#261510", "--bg-raise-2": "#351d14",
-                "--line": "rgba(255,166,110,.18)", "--line-soft": "rgba(255,166,110,.09)",
-                "--ember": "#ff6a3d", "--ember-deep": "#c23d10", "--habanero": "#ffab5c",
-                "--ash": "#b2917f", "--ash-dim": "#7a6153",
-                "--cream": "#fff2e8"
+                "--bg": "#050f08", "--bg-raise": "#0b1c10", "--bg-raise-2": "#112a18",
+                "--line": "rgba(120,255,150,.2)", "--line-soft": "rgba(120,255,150,.1)",
+                "--ember": "#3fe073", "--ember-deep": "#17914a", "--habanero": "#9dffb0",
+                "--ash": "#86bf96", "--ash-dim": "#4f7a5c",
+                "--cream": "#e8fff0"
             }
         },
-        ice: {
-            name: "Muz Ko'k",
-            swatch: ["#3ec9e0", "#0a1216"],
-            vars: {
-                "--bg": "#0a1216", "--bg-raise": "#101d24", "--bg-raise-2": "#162833",
-                "--line": "rgba(140,224,255,.18)", "--line-soft": "rgba(140,224,255,.09)",
-                "--ember": "#3ec9e0", "--ember-deep": "#157e93", "--habanero": "#7de3f0",
-                "--ash": "#82aab2", "--ash-dim": "#527078",
-                "--cream": "#eafcff"
-            }
-        },
-        pink: {
-            name: "Pushti Sevgi",
-            swatch: ["#ff5c9a", "#170b12"],
-            vars: {
-                "--bg": "#170b12", "--bg-raise": "#26121d", "--bg-raise-2": "#351828",
-                "--line": "rgba(255,150,200,.18)", "--line-soft": "rgba(255,150,200,.09)",
-                "--ember": "#ff5c9a", "--ember-deep": "#c22161", "--habanero": "#ff8fbd",
-                "--ash": "#b591a0", "--ash-dim": "#7a5c69",
-                "--cream": "#fff0f6"
-            }
-        },
-        space: {
-            name: "Kosmik",
-            swatch: ["#7a5cff", "#0a0a16"],
-            vars: {
-                "--bg": "#0a0a16", "--bg-raise": "#131328", "--bg-raise-2": "#1c1c3a",
-                "--line": "rgba(160,150,255,.18)", "--line-soft": "rgba(160,150,255,.09)",
-                "--ember": "#7a5cff", "--ember-deep": "#4327a8", "--habanero": "#a58aff",
-                "--ash": "#8f8ab5", "--ash-dim": "#5c5980",
-                "--cream": "#f1eeff"
-            }
-        },
-        red: {
-            name: "Qizil Olov",
-            swatch: ["#ff3b2e", "#150808"],
-            vars: {
-                "--bg": "#150808", "--bg-raise": "#241010", "--bg-raise-2": "#341616",
-                "--line": "rgba(255,130,110,.18)", "--line-soft": "rgba(255,130,110,.09)",
-                "--ember": "#ff3b2e", "--ember-deep": "#a3160c", "--habanero": "#ff7a5c",
-                "--ash": "#b28c85", "--ash-dim": "#7a5b56",
-                "--cream": "#ffefec"
-            }
-        },
-        minimal: {
-            name: "Minimal Light",
+        light_theme: {
+            name: "Yorug' Stil",
             swatch: ["#ff4a1f", "#f4ede4"],
             vars: {
                 "--bg": "#f4ede4", "--bg-raise": "#ffffff", "--bg-raise-2": "#fbf3e8",
@@ -1845,13 +1801,46 @@
                 "--ash": "#7a6a5c", "--ash-dim": "#a89a8c",
                 "--cream": "#201510"
             }
+        },
+        space_theme: {
+            name: "Kosmik Stil",
+            swatch: ["#8a6bff", "#07061a"],
+            vars: {
+                "--bg": "#07061a", "--bg-raise": "#10102c", "--bg-raise-2": "#191a42",
+                "--line": "rgba(150,140,255,.2)", "--line-soft": "rgba(150,140,255,.1)",
+                "--ember": "#8a6bff", "--ember-deep": "#4a2fb0", "--habanero": "#5fc9ff",
+                "--ash": "#948fc7", "--ash-dim": "#5d5a86",
+                "--cream": "#f0eeff"
+            }
+        },
+        matrix: {
+            name: "Matrix Stil",
+            swatch: ["#2bff7a", "#000603"],
+            vars: {
+                "--bg": "#000603", "--bg-raise": "#020f08", "--bg-raise-2": "#041a0d",
+                "--line": "rgba(70,255,140,.22)", "--line-soft": "rgba(70,255,140,.1)",
+                "--ember": "#2bff7a", "--ember-deep": "#0f9e46", "--habanero": "#8dff9a",
+                "--ash": "#4f9c68", "--ash-dim": "#2c5c3c",
+                "--cream": "#d8ffe4"
+            }
+        },
+        gold_premium: {
+            name: "Premium Oltin",
+            swatch: ["#f0b429", "#140f04"],
+            vars: {
+                "--bg": "#140f04", "--bg-raise": "#221a08", "--bg-raise-2": "#32270c",
+                "--line": "rgba(255,209,110,.22)", "--line-soft": "rgba(255,209,110,.1)",
+                "--ember": "#f0b429", "--ember-deep": "#a06f0c", "--habanero": "#ffe08a",
+                "--ash": "#c2ab7c", "--ash-dim": "#83714c",
+                "--cream": "#fff8e4"
+            }
         }
     };
 
     function applyTheme(themeId) {
 
         const theme =
-            THEMES[themeId] || THEMES.ember;
+            THEMES[themeId] || THEMES.classic_dark;
 
         const root =
             document.documentElement.style;
@@ -1865,7 +1854,7 @@
         currentTheme = themeId;
     }
 
-    let currentTheme = "ember";
+    let currentTheme = "classic_dark";
 
     const SKIN_IMAGE = {
         chili_v1: "/assets/skins/chili_v1.png",
