@@ -114,7 +114,7 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS equipped_skin TEXT NOT NULL DEFAULT 'chili_v1',
       ADD COLUMN IF NOT EXISTS owned_skins TEXT[] NOT NULL DEFAULT ARRAY['chili_v1']::TEXT[],
       ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT false,
-      ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'ember';
+      ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'classic_dark';
   `);
 
   await pool.query(`
@@ -647,17 +647,16 @@ async function addCoins(userId, amount, type) {
 
 
 const THEME_IDS = [
-  "ember",
-  "neon",
-  "royal",
-  "cyber",
-  "forest",
-  "sunset",
-  "ice",
-  "pink",
-  "space",
-  "red",
-  "minimal"
+  "classic_dark",
+  "neon_cyber",
+  "fantasy_fire",
+  "futuristic_glass",
+  "retro_pixel",
+  "dark_neon_green",
+  "light_theme",
+  "space_theme",
+  "matrix",
+  "gold_premium"
 ];
 
 async function setUserTheme(userId, theme) {
